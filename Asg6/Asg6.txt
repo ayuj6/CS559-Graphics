@@ -1,0 +1,96 @@
+#ifdef VS 
+ 
+precision highp float;
+attribute vec3 position;
+attribute vec3 normal;
+uniform mat3 normalMatrix;
+uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
+varying vec3 fNormal;
+varying vec3 fPosition;
+
+uniform float time;
+
+const float pi = 3.14159;
+varying vec3 modelX;
+varying vec3 modelN;
+varying vec3 rawZ;
+
+vec2 Rotate2D(vec2 vec_in, float angle)
+{
+  vec2 vec_out;
+  vec_out.x=cos(angle)*vec_in.x-sin(angle)*vec_in.y;
+  vec_out.y=sin(angle)*vec_in.x+cos(angle)*vec_in.y;
+  return vec_out;
+}
+
+void main()
+{
+  modelX=position;
+  rawZ=position;
+  modelN=normal;
+
+  if(modelX.x<0.3 && modelX.y>0.3)
+  modelX.xy = Rotate2D(modelX.xy,0.1*pi*modelX.y*sin(10.0*time));
+  if(modelX.x<0.3 && modelX.y<0.2)
+  modelX.xy = Rotate2D(modelX.xy,0.1*pi*modelX.y*sin(10.0*time));
+  if(modelX.x>0.4 && modelX.y<0.3)
+  modelX.xz = Rotate2D(modelX.xz,0.1*pi*modelX.y*sin(10.0*time));
+  if (modelX.x>0.3 && modelX.y<0.7)
+  modelX.xy = Rotate2D(modelX.xy,0.1*pi*modelX.y*sin(10.0*time));
+  if(modelX.x>0.8 && modelX.y>0.3)
+  modelX.xz = Rotate2D(modelX.xz,0.1*pi*modelX.y*sin(10.0*time));
+  
+  modelN.xz = Rotate2D(modelN.xz,0.1*pi*modelX.y*sin(10.0*time));
+  
+  fNormal = normalize(normalMatrix * modelN);
+  vec4 pos = modelViewMatrix * vec4(modelX, 1.0);
+  fPosition = pos.xyz;
+  gl_Position = projectionMatrix * pos;
+}
+ 
+#else 
+ 
+precision highp float;
+uniform float time;
+varying vec3 fNormal;
+vec3 objColor;
+vec3 color[4];
+
+void main()
+{
+  vec3 lightDir = vec3(0, -1, -0.25);
+  
+  int currColorIndex = int(mod(time*15.0, 4.0));
+  int lightingIndex = int(mod(time*30.0, 2.0)); 
+
+  color[0] = vec3(1, 0, 0);
+  color[1] = vec3(0, 1, 0);
+  color[2] = vec3(0, 0, 1);
+  color[3] = vec3(1, 1, 0);
+
+  if(currColorIndex == 0){
+    objColor = color[0];
+  } 
+  else if (currColorIndex == 1){
+    objColor = color[1];
+  } 
+  else if (currColorIndex == 2){
+    objColor = color[2];
+  } 
+  else {
+    objColor = color[3];
+  }
+
+  float diffuseLight = dot(fNormal,lightDir) + 0.25;
+
+  if(lightingIndex == 0){
+    gl_FragColor = vec4(diffuseLight * objColor, 1.0);
+  } 
+  else {
+    gl_FragColor = vec4(0.0*objColor, 1.0);
+  }
+  
+}
+ 
+#endif
